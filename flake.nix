@@ -13,6 +13,9 @@
       default = pkgs.mkShell {
         packages = with pkgs; [
           python312Packages.mysql-connector
+          python312Packages.peewee
+          python312Packages.pymysql
+          python312Packages.datetime
         ];
       };
     });
