@@ -16,6 +16,7 @@
           python312Packages.peewee
           python312Packages.pymysql
           python312Packages.datetime
+          python312Packages.anysqlite
         ];
       };
     });
