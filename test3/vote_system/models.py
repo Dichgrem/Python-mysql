@@ -17,9 +17,19 @@ class Option(BaseModel):
     title = CharField(unique=True, max_length=100)
     vote_count = IntegerField(default=0)
 
+# class UserVote(BaseModel):
+#     id = AutoField()
+#     user = ForeignKeyField(User, backref='votes')
+#     option = ForeignKeyField(Option, backref='user_votes')
+#     created_at = DateTimeField(default=datetime.now)
+
 class UserVote(BaseModel):
     id = AutoField()
     user = ForeignKeyField(User, backref='votes')
     option = ForeignKeyField(Option, backref='user_votes')
     created_at = DateTimeField(default=datetime.now)
 
+    class Meta:
+        indexes = (
+            (('user',), True),  # 用户只能投一次
+        )
