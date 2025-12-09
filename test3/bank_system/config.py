@@ -1,6 +1,6 @@
 DB_CONFIG = {
-    # 'engine': 'mysql',
-    'engine': 'sqlite',
+    'engine': 'mysql',
+    # 'engine': 'sqlite',
     'host': 'localhost',
     'user': 'school',
     'password': 'school',
