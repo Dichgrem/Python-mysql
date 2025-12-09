@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>投票系统</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        margin: 40px;
+      }
+      h1 {
+        margin-bottom: 8px;
+      }
+      .row {
+        display: flex;
+        gap: 24px;
+      }
+      .box {
+        border: 1px solid #ddd;
+        padding: 16px;
+        border-radius: 8px;
+      }
+      ul {
+        list-style: none;
+        padding: 0;
+      }
+      li {
+        margin: 6px 0;
+      }
+      button {
+        padding: 8px 12px;
+      }
+      .alert {
+        padding: 10px 12px;
+        border-radius: 6px;
+        margin: 8px 0;
+      }
+      .alert.error {
+        background: #ffe6e6;
+        color: #b00020;
+        border: 1px solid #ffcccc;
+      }
+      .alert.success {
+        background: #e6ffed;
+        color: #046b1a;
+        border: 1px solid #b8f0c9;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>投票系统</h1>
+    <p>当前用户：<strong>{{ user.username }}</strong></p>
+    {% if err %}
+    <div class="alert error">{{ err }}</div>
+    {% endif %} {% if msg %}
+    <div class="alert success">{{ msg }}</div>
+    {% endif %}
+    <form method="post" action="/web/logout">
+      <button type="submit">退出登录</button>
+    </form>
+
+    <div class="row">
+      <div class="box">
+        <h3>投票选项</h3>
+        <form method="post" action="/web/vote">
+          <ul>
+            {% for o in options %}
+            <li>
+              <label>
+                <input type="radio" name="option_id" value="{{ o.id }}" {% if
+                current_option_id == o.id %}checked{% endif %}/> {{ o.title
+                }}（当前票数：{{ o.vote_count }}）
+              </label>
+            </li>
+            {% endfor %}
+          </ul>
+          <button type="submit">投票</button>
+        </form>
+        <form method="post" action="/web/cancel" style="margin-top: 8px">
+          <button type="submit">取消投票</button>
+        </form>
+        <p style="margin-top: 8px"><a href="/">刷新</a></p>
+      </div>
+
+      <div class="box">
+        <h3>并发投票演示</h3>
+        <p>选择上面单选项后，点击下方按钮并发提交 20 次。</p>
+        <div>
+          <button id="btnBatch">并发投票 20 次</button>
+        </div>
+        <pre id="log" style="margin-top: 8px"></pre>
+      </div>
+    </div>
+
+    <script>
+      function getCookie(name) {
+        const m = document.cookie.match(
+          "(^|;)\\s*" + name + "\\s*=\\s*([^;]+)"
+        );
+        return m ? m.pop() : "";
+      }
+      document
+        .getElementById("btnBatch")
+        .addEventListener("click", async () => {
+          const uid = getCookie("user_id");
+          const selected = document.querySelector(
+            'input[name="option_id"]:checked'
+          );
+          if (!uid || !selected) {
+            alert("请先登录并选择一个选项");
+            return;
+          }
+          const optionId = selected.value;
+          const tasks = [];
+          for (let i = 0; i < 20; i++) {
+            tasks.push(
+              fetch("/vote", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  user_id: parseInt(uid),
+                  option_id: parseInt(optionId),
+                }),
+              })
+                .then((r) => r.json())
+                .catch(() => ({ ok: false }))
+            );
+          }
+          const results = await Promise.all(tasks);
+          const okCount = results.filter((r) => r && r.ok).length;
+          const failCount = results.length - okCount;
+          document.getElementById("log").textContent =
+            "成功: " + okCount + " / 20，失败: " + failCount;
+        });
+    </script>
+  </body>
+</html>

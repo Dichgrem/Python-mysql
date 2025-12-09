@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>银行系统</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        margin: 40px;
+      }
+      h1 {
+        margin-bottom: 8px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+      }
+      .box {
+        border: 1px solid #ddd;
+        padding: 16px;
+        border-radius: 8px;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      th,
+      td {
+        border: 1px solid #eee;
+        padding: 8px;
+        text-align: left;
+      }
+      input,
+      button {
+        padding: 8px;
+        margin: 4px 0;
+      }
+      .alert {
+        padding: 10px 12px;
+        border-radius: 6px;
+        margin: 8px 0;
+      }
+      .alert.error {
+        background: #ffe6e6;
+        color: #b00020;
+        border: 1px solid #ffcccc;
+      }
+      .alert.success {
+        background: #e6ffed;
+        color: #046b1a;
+        border: 1px solid #b8f0c9;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>银行系统</h1>
+    {% if err %}
+    <div class="alert error">{{ err }}</div>
+    {% endif %} {% if msg %}
+    <div class="alert success">{{ msg }}</div>
+    {% endif %}
+    <div class="grid">
+      <div class="box">
+        <h3>账户列表</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>名称</th>
+              <th>余额</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for a in accounts %}
+            <tr>
+              <td>{{ a.id }}</td>
+              <td>{{ a.name }}</td>
+              <td>{{ a.balance }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        <p style="margin-top: 8px"><a href="/">刷新</a></p>
+      </div>
+
+      <div class="box">
+        <h3>存钱</h3>
+        <form method="post" action="/web/deposit">
+          <div>
+            <input
+              type="number"
+              name="account_id"
+              placeholder="账户ID"
+              required
+            />
+          </div>
+          <div>
+            <input type="number" name="amount" placeholder="金额" required />
+          </div>
+          <button type="submit">存钱</button>
+        </form>
+
+        <h3 style="margin-top: 12px">取钱</h3>
+        <form method="post" action="/web/withdraw">
+          <div>
+            <input
+              type="number"
+              name="account_id"
+              placeholder="账户ID"
+              required
+            />
+          </div>
+          <div>
+            <input type="number" name="amount" placeholder="金额" required />
+          </div>
+          <button type="submit">取钱</button>
+        </form>
+
+        <h3 style="margin-top: 12px">转账</h3>
+        <form method="post" action="/web/transfer">
+          <div>
+            <input
+              type="number"
+              name="from_id"
+              placeholder="来源账户ID"
+              required
+            />
+          </div>
+          <div>
+            <input
+              type="number"
+              name="to_id"
+              placeholder="目标账户ID"
+              required
+            />
+          </div>
+          <div>
+            <input type="number" name="amount" placeholder="金额" required />
+          </div>
+          <button type="submit">转账</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="box" style="margin-top: 24px">
+      <h3>并发取钱演示</h3>
+      <p>输入账户与金额，点击并发取钱 20 次。</p>
+      <div><input type="number" id="cid" placeholder="账户ID" /></div>
+      <div><input type="number" id="amt" placeholder="金额" /></div>
+      <button id="btnBatch">并发取钱 20 次</button>
+      <pre id="log" style="margin-top: 8px"></pre>
+    </div>
+
+    <script>
+      document
+        .getElementById("btnBatch")
+        .addEventListener("click", async () => {
+          const cid = parseInt(document.getElementById("cid").value || "0", 10);
+          const amt = parseInt(document.getElementById("amt").value || "0", 10);
+          if (!cid || !amt) {
+            alert("请输入账户ID与金额");
+            return;
+          }
+          const tasks = [];
+          for (let i = 0; i < 20; i++) {
+            tasks.push(
+              fetch("/withdraw", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ account_id: cid, amount: amt }),
+              })
+                .then((r) => r.json())
+                .catch(() => ({ ok: false }))
+            );
+          }
+          const results = await Promise.all(tasks);
+          const okCount = results.filter((r) => r && r.ok).length;
+          document.getElementById("log").textContent =
+            "成功: " + okCount + " / 20";
+        });
+    </script>
+  </body>
+</html>

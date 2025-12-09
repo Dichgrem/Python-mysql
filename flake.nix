@@ -17,6 +17,7 @@
           python312Packages.pymysql
           python312Packages.datetime
           python312Packages.anysqlite
+          python312Packages.flask
         ];
       };
     });
